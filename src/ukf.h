@@ -2,6 +2,7 @@
 #define UKF_H
 
 static const int NUM_STATE_DIM = 5;
+static const double LAMBDA = 3 - NUM_STATE_DIM;
 
 #include "measurement_package.h"
 #include "Eigen/Dense"
@@ -107,6 +108,8 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+    MatrixXd generate_sigma_points();
 };
 
 #endif /* UKF_H */

@@ -110,14 +110,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   /*****************************************************************************
    *  Prediction
    ****************************************************************************/
-
-  /**
-     * Update the state transition matrix F according to the new elapsed time.
-      - Time is measured in seconds.
-      * Update the process noise covariance matrix.
-     * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
-   */
-
   //compute the time elapsed between the current and previous measurements
   float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = meas_package.timestamp_;
@@ -152,12 +144,26 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-  /**
-  TODO:
+  MatrixXd sigma_points = generate_sigma_points();
+}
 
-  Complete this function! Estimate the object's location. Modify the state
-  vector, x_. Predict sigma points, the state, and the state covariance matrix.
-  */
+
+MatrixXd UKF::generate_sigma_points() {
+  MatrixXd Xsig = MatrixXd(NUM_STATE_DIM, 2 * NUM_STATE_DIM + 1);
+
+  //calculate square root of P
+  MatrixXd A = P_.llt().matrixL();
+
+  //set first column of sigma point matrix
+  Xsig.col(0)  = x_;
+
+  //set remaining sigma points
+  for (int i = 0; i < NUM_STATE_DIM; i++) {
+    Xsig.col(i+1)               = x_ + sqrt(LAMBDA + NUM_STATE_DIM) * A.col(i);
+    Xsig.col(i+1+NUM_STATE_DIM) = x_ - sqrt(LAMBDA + NUM_STATE_DIM) * A.col(i);
+  }
+
+  return Xsig;
 }
 
 /**
