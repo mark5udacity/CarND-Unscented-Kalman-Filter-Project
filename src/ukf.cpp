@@ -147,7 +147,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   MatrixXd sigma_points = generate_sigma_points();
-  predict_sigma_points();
+    predict_sigma_points(sigma_points, delta_t);
   //predict_mean_and_covariance();
 }
 
@@ -193,9 +193,60 @@ MatrixXd UKF::generate_sigma_points() {
     return Xsig_aug;
 }
 
-MatrixXd UKF::predict_sigma_points() {
+MatrixXd UKF::predict_sigma_points(MatrixXd Xsig_aug, double delta_t) {
+    //create matrix with predicted sigma points as columns
+    MatrixXd Xsig_pred = MatrixXd(NUM_STATE_DIM, 2 * n_aug_ + 1);
 
+    //predict sigma points
+    for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+        //extract values for better readability
+        double p_x = Xsig_aug(0,i);
+        double p_y = Xsig_aug(1,i);
+        double v = Xsig_aug(2,i);
+        double yaw = Xsig_aug(3,i);
+        double yawd = Xsig_aug(4,i); // row dot
+        double nu_a = Xsig_aug(5,i);
+        double nu_yawdd = Xsig_aug(6,i);
+
+        double yawd_t = yawd * delta_t;
+
+        //predicted state values
+        double px_p, py_p;
+
+        if (fabs(yawd) > 0.001) { //avoid division by zero
+            double v_over_yawd = v / yawd;
+            px_p = p_x + v_over_yawd * (sin(yaw + yawd_t) - sin(yaw));
+            py_p = p_y + v_over_yawd * (cos(yaw) - cos(yaw + yawd_t));
+        } else {
+            double v_t = v * delta_t;
+            px_p = p_x + v_t * cos(yaw);
+            py_p = p_y + v_t * sin(yaw);
+        }
+
+        double v_p = v;
+        double yaw_p = yaw + yawd_t;
+        double yawd_p = yawd;
+
+        // add noise
+        double delta_t_2d = delta_t * delta_t * 0.5;
+        px_p += delta_t_2d * cos(yaw) * nu_a;
+        py_p += delta_t_2d * sin(yaw) * nu_a;
+        v_p += delta_t * nu_a;
+        yaw_p += delta_t_2d * nu_yawdd;
+        yawd_p += delta_t * nu_yawdd;
+
+        //write predicted sigma points into right column
+        Xsig_pred(0, i) = px_p;
+        Xsig_pred(1, i) = py_p;
+        Xsig_pred(2, i) = v_p;
+        Xsig_pred(3, i) = yaw_p;
+        Xsig_pred(4, i) = yawd_p;
+    }
+
+    //cout << "Prediction: " << Xsig_pred << "\n";
+    return Xsig_pred;
 }
+
 /**
  * Updates the state and the state covariance matrix using a laser measurement.
  * @param {MeasurementPackage} meas_package

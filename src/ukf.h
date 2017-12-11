@@ -16,7 +16,7 @@ using Eigen::VectorXd;
 class UKF {
 private:
   MatrixXd generate_sigma_points();
-  MatrixXd predict_sigma_points();
+  MatrixXd predict_sigma_points(MatrixXd matrix, double d);
 
 public:
 
