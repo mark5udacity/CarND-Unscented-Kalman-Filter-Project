@@ -74,6 +74,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       * */
     // first measurement
     cout << "Initialing EKF" << endl;
+
+    n_aug_ = NUM_STATE_DIM + 2;
     P_ << 0.5, 0,   0, 0,   0,
             0, 0.5, 0, 0,   0,
             0, 0,   1, 0,   0,
@@ -145,27 +147,55 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   MatrixXd sigma_points = generate_sigma_points();
+  predict_sigma_points();
+  //predict_mean_and_covariance();
 }
 
 
 MatrixXd UKF::generate_sigma_points() {
-  MatrixXd Xsig = MatrixXd(NUM_STATE_DIM, 2 * NUM_STATE_DIM + 1);
+    //Process noise standard deviation longitudinal acceleration in m/s^2
+    double std_a = 0.2;
 
-  //calculate square root of P
-  MatrixXd A = P_.llt().matrixL();
+    //Process noise standard deviation yaw acceleration in rad/s^2
+    double std_yawdd = 0.2;
 
-  //set first column of sigma point matrix
-  Xsig.col(0)  = x_;
+    //create augmented mean vector
+    VectorXd x_aug = VectorXd(n_aug_);
 
-  //set remaining sigma points
-  for (int i = 0; i < NUM_STATE_DIM; i++) {
-    Xsig.col(i+1)               = x_ + sqrt(LAMBDA + NUM_STATE_DIM) * A.col(i);
-    Xsig.col(i+1+NUM_STATE_DIM) = x_ - sqrt(LAMBDA + NUM_STATE_DIM) * A.col(i);
-  }
+    //create augmented state covariance
+    MatrixXd P_aug = MatrixXd(n_aug_, n_aug_);
 
-  return Xsig;
+    //create sigma point matrix
+    MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+
+    //create augmented mean state
+    x_aug.head(5) = x_;
+    x_aug(5) = 0;
+    x_aug(6) = 0;
+
+    //create augmented covariance matrix
+    P_aug.fill(0.0);
+    P_aug.topLeftCorner(5,5) = P_;
+    P_aug(5,5) = std_a*std_a;
+    P_aug(6,6) = std_yawdd*std_yawdd;
+
+    //create square root matrix
+    MatrixXd A = P_aug.llt().matrixL();
+
+    //create augmented sigma points
+    Xsig_aug.col(0)  = x_aug;
+    for (int i = 0; i < n_aug_; i++)
+    {
+        Xsig_aug.col(i+1)       = x_aug + sqrt(LAMBDA + n_aug_) * A.col(i);
+        Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(LAMBDA + n_aug_) * A.col(i);
+    }
+
+    return Xsig_aug;
 }
 
+MatrixXd UKF::predict_sigma_points() {
+
+}
 /**
  * Updates the state and the state covariance matrix using a laser measurement.
  * @param {MeasurementPackage} meas_package

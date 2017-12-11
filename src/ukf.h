@@ -14,6 +14,10 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 class UKF {
+private:
+  MatrixXd generate_sigma_points();
+  MatrixXd predict_sigma_points();
+
 public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
@@ -108,8 +112,6 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
-
-    MatrixXd generate_sigma_points();
 };
 
 #endif /* UKF_H */
