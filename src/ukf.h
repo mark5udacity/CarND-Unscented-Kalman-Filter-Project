@@ -1,6 +1,8 @@
 #ifndef UKF_H
 #define UKF_H
 
+static const int NUM_STATE_DIM = 5;
+
 #include "measurement_package.h"
 #include "Eigen/Dense"
 #include <vector>
@@ -15,6 +17,9 @@ public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
+
+  // previous timestamp
+  long long previous_timestamp_;
 
   ///* if this is false, laser measurements will be ignored (except for init)
   bool use_laser_;

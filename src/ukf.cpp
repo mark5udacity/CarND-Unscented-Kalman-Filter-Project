@@ -19,10 +19,10 @@ UKF::UKF() {
   use_radar_ = true;
 
   // initial state vector
-  x_ = VectorXd(5);
+  x_ = VectorXd(NUM_STATE_DIM);
 
   // initial covariance matrix
-  P_ = MatrixXd(5, 5);
+  P_ = MatrixXd(NUM_STATE_DIM, NUM_STATE_DIM);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
@@ -63,12 +63,87 @@ UKF::~UKF() {}
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-  /**
-  TODO:
 
-  Complete this function! Make sure you switch between lidar and radar
-  measurements.
-  */
+  /*****************************************************************************
+    *  Initialization
+    ****************************************************************************/
+  if (!is_initialized_) {
+    /**
+      * Initialize the state with the first measurement.
+      * Create the covariance matrix.
+      * */
+    // first measurement
+    cout << "Initialing EKF" << endl;
+    P_ << 0.5, 0,   0, 0,   0,
+            0, 0.5, 0, 0,   0,
+            0, 0,   1, 0,   0,
+            0, 0,   0, 0.5, 0,
+            0, 0,   0, 0,   0.5;
+
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+      /**
+      Convert radar from polar to cartesian coordinates and initialize state.
+      */
+      double px, py, vx, vy;
+
+      double rho = meas_package.raw_measurements_[0];
+      double phi = meas_package.raw_measurements_[1];
+      px = rho * cos(phi);
+      py = rho * sin(phi);
+
+
+      x_ << px, py, 0, 0, 0;
+    } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+      x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
+      previous_timestamp_ = meas_package.timestamp_;
+    } else {
+      cout << "Received unknown update type!? : " << meas_package.sensor_type_ << "\n";
+    }
+
+    is_initialized_ = true;
+
+    // done initializing, no need to predict or update
+    return;
+  }
+
+
+  /*****************************************************************************
+   *  Prediction
+   ****************************************************************************/
+
+  /**
+     * Update the state transition matrix F according to the new elapsed time.
+      - Time is measured in seconds.
+      * Update the process noise covariance matrix.
+     * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
+   */
+
+  //compute the time elapsed between the current and previous measurements
+  float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
+  previous_timestamp_ = meas_package.timestamp_;
+
+  Prediction(previous_timestamp_);
+
+  /*****************************************************************************
+   *  Update
+   ****************************************************************************/
+
+  /**
+     * Use the sensor type to perform the update step.
+     * Update the state and covariance matrices.
+   */
+
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    UpdateRadar(meas_package);
+  } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    UpdateLidar(meas_package);
+  } else {
+    cout << "Received unknown update type!? : " <<  meas_package.sensor_type_ << "\n";
+  }
+
+  // print the output
+  cout << "x_ = " << x_ << endl;
+  cout << "P_ = " << P_ << endl;
 }
 
 /**
