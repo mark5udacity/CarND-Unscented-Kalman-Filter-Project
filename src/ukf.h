@@ -3,6 +3,7 @@
 
 static const int NUM_STATE_DIM = 5;
 static const double LAMBDA = 3 - NUM_STATE_DIM;
+static const int NUM_RADAR_DIM = 3;
 
 #include "measurement_package.h"
 #include "Eigen/Dense"
