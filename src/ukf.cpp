@@ -1,6 +1,7 @@
 #include "ukf.h"
 #include "Eigen/Dense"
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -147,8 +148,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   MatrixXd sigma_points = generate_sigma_points();
-    predict_sigma_points(sigma_points, delta_t);
-  //predict_mean_and_covariance();
+  MatrixXd sigma_predict = predict_sigma_points(sigma_points, delta_t);
+  predict_mean_and_covariance(sigma_predict);
 }
 
 
@@ -184,8 +185,7 @@ MatrixXd UKF::generate_sigma_points() {
 
     //create augmented sigma points
     Xsig_aug.col(0)  = x_aug;
-    for (int i = 0; i < n_aug_; i++)
-    {
+    for (int i = 0; i < n_aug_; i++) {
         Xsig_aug.col(i+1)       = x_aug + sqrt(LAMBDA + n_aug_) * A.col(i);
         Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(LAMBDA + n_aug_) * A.col(i);
     }
@@ -245,6 +245,44 @@ MatrixXd UKF::predict_sigma_points(MatrixXd Xsig_aug, double delta_t) {
 
     //cout << "Prediction: " << Xsig_pred << "\n";
     return Xsig_pred;
+}
+
+void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
+
+    //create vector for weights
+    VectorXd weights = VectorXd(2 * n_aug_ + 1);
+
+    //set weights
+    weights(0) = LAMBDA / (LAMBDA + n_aug_);
+    for (int i=1; i < weights.rows(); i++) {
+        weights(i) = 1 / (2 * (LAMBDA + n_aug_));
+    }
+
+    //predict state mean
+    for (int i=0; i < weights.rows(); i++) {
+        x_ += weights(i) * Xsig_pred.col(i);
+    }
+
+    //predict state covariance matrix
+    for (int i=0; i < weights.rows(); i++) {
+        // state difference
+        VectorXd x_diff = Xsig_pred.col(i) - x_;
+        //cout << "calc'd diff, now for x_diff(3)" << x_diff(3) << " is > M_PI? " << M_PI << endl;
+
+        //angle normalization
+        // for some reason: really, really large num_e^15 large num is here, this causes almost infinite loop.
+        x_diff(3) = fmod(x_diff(3), 5.); // Need to reconsider initialization.
+        //cout << "moded by 10, now for x_diff(3)" << x_diff(3) << " is > M_PI? " << M_PI << endl;
+        while (x_diff(3) > M_PI) x_diff(3) -= 2.*M_PI;
+        //cout << "normalized down" << endl;
+
+        while (x_diff(3) < -M_PI) x_diff(3) +=2.*M_PI;
+        //cout << "normalized up" << endl;
+
+        P_ += weights(i) * x_diff * x_diff.transpose();
+        //cout << "P is incremented" << endl;
+    }
+    cout << "all done" << endl;
 }
 
 /**
