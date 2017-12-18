@@ -76,8 +76,11 @@ int main()
           		meas_package.raw_measurements_ << px, py;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
+                cout << "laser reading received" << endl;
+              //std::string msg = "42[\"manual\",{}]";
+              //ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+              //cout << "IGNORING LASER" << endl;
           } else if (sensor_type.compare("R") == 0) {
-
       	  		meas_package.sensor_type_ = MeasurementPackage::RADAR;
           		meas_package.raw_measurements_ = VectorXd(3);
           		float ro;
@@ -89,6 +92,8 @@ int main()
           		meas_package.raw_measurements_ << ro,theta, ro_dot;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
+                cout << "radar reading received" << endl;
+              return;
           }
           float x_gt;
     	  float y_gt;
@@ -142,7 +147,6 @@ int main()
 	  
         }
       } else {
-        
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }

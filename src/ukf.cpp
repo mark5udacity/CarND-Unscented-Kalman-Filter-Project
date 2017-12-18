@@ -285,7 +285,7 @@ void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
         P_ += weights(i) * x_diff * x_diff.transpose();
         //cout << "P is incremented" << endl;
     }
-    cout << "all done" << endl;
+    //cout << "all done" << endl;
 }
 
 /**
