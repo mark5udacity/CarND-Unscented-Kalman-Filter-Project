@@ -20,6 +20,11 @@ private:
   MatrixXd predict_sigma_points(MatrixXd Xsig_aug, double delta_t);
   void predict_mean_and_covariance(MatrixXd Xsig_pred);
 
+  MatrixXd xIdentity;
+  MatrixXd R_;
+  MatrixXd H_;
+  MatrixXd Ht;
+
 public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
