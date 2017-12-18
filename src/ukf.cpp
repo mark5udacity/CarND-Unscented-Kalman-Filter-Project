@@ -289,14 +289,39 @@ void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
  * @param {MeasurementPackage} meas_package
  */
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
-  /**
-  TODO:
 
-  Complete this function! Use lidar data to update the belief about the object's
-  position. Modify the state vector, x_, and covariance, P_.
+    // initialization (to go elsewhere)
+    MatrixXd R_ = MatrixXd(2, 2);
+    R_ << 0.0225, 0,
+            0, 0.0225;
 
-  You'll also need to calculate the lidar NIS.
-  */
+    MatrixXd H_ = MatrixXd(2, 5);
+    H_ << 1, 0, 0, 0, 0,
+            0, 1, 0, 0, 0;
+    MatrixXd Ht = H_.transpose();
+    /**
+    TODO:
+
+    Complete this function! Use lidar data to update the belief about the object's
+    position. Modify the state vector, x_, and covariance, P_.
+
+    You'll also need to calculate the lidar NIS.
+    */
+
+
+    // laser
+    VectorXd z_pred = H_ * x_;
+    VectorXd y = meas_package.raw_measurements_ - z_pred;
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd Si = S.inverse();
+    MatrixXd PHt = P_ * Ht;
+    MatrixXd K = PHt * Si;
+
+    //new estimate
+    x_ = x_ + (K * y);
+    long x_size = x_.size();
+    MatrixXd I = MatrixXd::Identity(x_size, x_size);
+    P_ = (I - K * H_) * P_;
 }
 
 /**
