@@ -10,7 +10,6 @@ using std::vector;
 
 /**
  * Initializes Unscented Kalman filter
- * This is scaffolding, do not modify
  */
 UKF::UKF() {
   // if this is false, laser measurements will be ignored (except during init)
@@ -87,22 +86,22 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             0, 0,   0, 0.5, 0,
             0, 0,   0, 0,   0.5;
 
+    previous_timestamp_ = meas_package.timestamp_;
+
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
       /**
       Convert radar from polar to cartesian coordinates and initialize state.
       */
-      double px, py, vx, vy;
+      double px, py;
 
       double rho = meas_package.raw_measurements_[0];
       double phi = meas_package.raw_measurements_[1];
       px = rho * cos(phi);
       py = rho * sin(phi);
 
-
       x_ << px, py, 0, 0, 0;
     } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
-      previous_timestamp_ = meas_package.timestamp_;
     } else {
       cout << "Received unknown update type!? : " << meas_package.sensor_type_ << "\n";
     }
@@ -121,7 +120,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = meas_package.timestamp_;
 
-  /*MatrixXd sigma_points =*/ Prediction(previous_timestamp_);
+  /*MatrixXd sigma_points =*/ Prediction(dt);
 
   /*****************************************************************************
    *  Update
