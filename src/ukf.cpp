@@ -59,6 +59,12 @@ UKF::UKF() {
   H_ << 1, 0, 0, 0, 0,
           0, 1, 0, 0, 0;
   Ht = H_.transpose();
+
+    weights = VectorXd(2 * n_aug_ + 1);
+    weights(0) = LAMBDA / (LAMBDA + n_aug_);
+    for (int i=1; i < weights.rows(); i++) {
+        weights(i) = 1 / (2 * (LAMBDA + n_aug_));
+    }
 }
 
 UKF::~UKF() {}
@@ -120,6 +126,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = meas_package.timestamp_;
 
+   // cout << "Change in time: " << dt << endl;
   /*MatrixXd sigma_points =*/ Prediction(dt);
 
   /*****************************************************************************
@@ -131,6 +138,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
      * Update the state and covariance matrices.
    */
 
+    // print the output
+    cout << "predicted x_ = " << x_ << endl;
+    cout << "predicted P_ = " << P_ << endl;
+
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
     UpdateRadar(meas_package);
   } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
@@ -139,9 +150,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     cout << "Received unknown update type!? : " <<  meas_package.sensor_type_ << "\n";
   }
 
-  // print the output
-  cout << "x_ = " << x_ << endl;
-  cout << "P_ = " << P_ << endl;
+  cout << "post measurement update x_ = " << x_ << endl;
+  cout << "post measurement update P_ = " << P_ << endl;
 }
 
 /**
@@ -151,7 +161,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   MatrixXd sigma_points = generate_sigma_points();
+  //cout << "Generated sigma points: " << sigma_points << endl;
   MatrixXd sigma_predict = predict_sigma_points(sigma_points, delta_t);
+  //cout << "predicted sigm: " << sigma_predict << endl;
   predict_mean_and_covariance(sigma_predict);
 }
 
@@ -251,16 +263,6 @@ MatrixXd UKF::predict_sigma_points(MatrixXd Xsig_aug, double delta_t) {
 }
 
 void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
-
-    //create vector for weights
-    VectorXd weights = VectorXd(2 * n_aug_ + 1);
-
-    //set weights
-    weights(0) = LAMBDA / (LAMBDA + n_aug_);
-    for (int i=1; i < weights.rows(); i++) {
-        weights(i) = 1 / (2 * (LAMBDA + n_aug_));
-    }
-
     //predict state mean
     for (int i=0; i < weights.rows(); i++) {
         x_ += weights(i) * Xsig_pred.col(i);
@@ -274,7 +276,7 @@ void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
 
         //angle normalization
         // for some reason: really, really large num_e^15 large num is here, this causes almost infinite loop.
-        x_diff(3) = fmod(x_diff(3), 5.); // Need to reconsider initialization.
+        //x_diff(3) = fmod(x_diff(3), 5.); // Need to reconsider initialization.
         //cout << "moded by 10, now for x_diff(3)" << x_diff(3) << " is > M_PI? " << M_PI << endl;
         while (x_diff(3) > M_PI) x_diff(3) -= 2.*M_PI;
         //cout << "normalized down" << endl;
@@ -324,16 +326,6 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   TODO: You'll also need to calculate the radar NIS.
   */
-
-
-    //set vector for weights
-    VectorXd weights = VectorXd(2 * n_aug_ + 1);
-    double weight_0 = LAMBDA / (LAMBDA + n_aug_);
-    weights(0) = weight_0;
-    for (int i=1; i < 2 * n_aug_ + 1; i++) {
-        double weight = 0.5 / (n_aug_ + LAMBDA);
-        weights(i) = weight;
-    }
 
     //create example matrix with predicted sigma points
     MatrixXd Xsig_pred = MatrixXd(NUM_STATE_DIM, 2 * n_aug_ + 1);

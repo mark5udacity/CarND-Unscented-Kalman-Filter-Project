@@ -24,6 +24,7 @@ private:
   MatrixXd R_;
   MatrixXd H_;
   MatrixXd Ht;
+  VectorXd weights;
 
 public:
 

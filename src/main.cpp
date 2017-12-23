@@ -76,7 +76,7 @@ int main()
           		meas_package.raw_measurements_ << px, py;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
-                cout << "laser reading received" << endl;
+                //cout << "laser reading received" << endl;
               //std::string msg = "42[\"manual\",{}]";
               //ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
               //cout << "IGNORING LASER" << endl;
@@ -92,8 +92,7 @@ int main()
           		meas_package.raw_measurements_ << ro,theta, ro_dot;
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
-                cout << "radar reading received" << endl;
-              return;
+                //cout << "radar reading received" << endl;
           }
           float x_gt;
     	  float y_gt;
