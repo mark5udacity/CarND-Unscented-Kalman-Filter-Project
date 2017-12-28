@@ -109,19 +109,19 @@ public:
      * matrix
      * @param delta_t Time between k and k+1 in s
      */
-    void Prediction(double delta_t);
+    MatrixXd Prediction(double delta_t);
 
     /**
      * Updates the state and the state covariance matrix using a laser measurement
-     * @param meas_package The measurement at k+1
+     * @param rawMeasurement The measurement at k+1
      */
-    void UpdateLidar(MeasurementPackage meas_package);
+    void UpdateLidar(VectorXd rawMeasurement, MatrixXd matrix);
 
     /**
      * Updates the state and the state covariance matrix using a radar measurement
-     * @param meas_package The measurement at k+1
+     * @param raw_measurement The measurement at k+1
      */
-    void UpdateRadar(MeasurementPackage meas_package);
+    void UpdateRadar(VectorXd raw_measurement, MatrixXd matrix);
 };
 
 #endif /* UKF_H */
