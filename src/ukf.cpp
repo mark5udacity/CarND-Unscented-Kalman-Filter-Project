@@ -260,11 +260,13 @@ MatrixXd UKF::predict_sigma_points(MatrixXd Xsig_aug, double delta_t) {
 
 void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
     //predict state mean
+    x_.fill(0.0);
     for (int i = 0; i < weights.rows(); i++) {
         x_ += weights(i) * Xsig_pred.col(i);
     }
 
     //predict state covariance matrix
+    P_.fill(0.0);
     for (int i = 0; i < weights.rows(); i++) {
         // state difference
         VectorXd x_diff = Xsig_pred.col(i) - x_;
