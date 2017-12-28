@@ -27,7 +27,7 @@ UKF::UKF() {
     std_a_ = 0.5;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.5;
+    std_yawdd_ = M_PI / 5;
 
     ////////////////// DO NOT MODIFY ////////////////////////////////////////////////////
     // measurement noise values below these are provided by the sensor manufacturer.   //
@@ -102,9 +102,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             px = rho * cos(phi);
             py = rho * sin(phi);
 
-            x_ << px, py, 0, 0, 0;
+            x_ << px, py, 0.01, 0.01, 0.01;
         } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-            x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
+            x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0.01, 0.01, 0.01;
         } else {
             cout << "Received unknown update type!? : " << meas_package.sensor_type_ << "\n";
         }
