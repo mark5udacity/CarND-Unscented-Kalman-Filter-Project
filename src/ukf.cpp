@@ -168,11 +168,6 @@ MatrixXd UKF::Prediction(double delta_t) {
 
 
 MatrixXd UKF::generate_sigma_points() {
-    //Process noise standard deviation longitudinal acceleration in m/s^2
-    double std_a = 0.2;
-
-    //Process noise standard deviation yaw acceleration in rad/s^2
-    double std_yawdd = 0.2;
 
     //create augmented mean vector
     VectorXd x_aug = VectorXd(n_aug_);
@@ -190,18 +185,20 @@ MatrixXd UKF::generate_sigma_points() {
 
     //create augmented covariance matrix
     P_aug.fill(0.0);
-    P_aug.topLeftCorner(5, 5) = P_;
-    P_aug(5, 5) = std_a * std_a;
-    P_aug(6, 6) = std_yawdd * std_yawdd;
+    P_aug.topLeftCorner(P_.rows(), P_.cols()) << P_;
+    P_aug(5, 5) = std_a_ * std_a_;
+    P_aug(6, 6) = std_yawdd_ * std_yawdd_;
 
     //create square root matrix
     MatrixXd A = P_aug.llt().matrixL();
 
+    double sqrtLambda = sqrt(LAMBDA + n_aug_);
+
     //create augmented sigma points
     Xsig_aug.col(0) = x_aug;
     for (int i = 0; i < n_aug_; i++) {
-        Xsig_aug.col(i + 1) = x_aug + sqrt(LAMBDA + n_aug_) * A.col(i);
-        Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(LAMBDA + n_aug_) * A.col(i);
+        Xsig_aug.col(i + 1) = x_aug + sqrtLambda * A.col(i);
+        Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrtLambda * A.col(i);
     }
 
     return Xsig_aug;
@@ -311,7 +308,7 @@ void UKF::UpdateLidar(VectorXd rawMeasurement, MatrixXd matrix) {
 
     //new estimate
     x_ = x_ + (K * y);
-    P_ = (xIdentity - K * H_) * P_;
+    P_ = (xIdentity - K * H_) * P_; // alternative: K * H_ * P_
 }
 
 /**
