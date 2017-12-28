@@ -359,7 +359,14 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
         double py2 = py * py;
         Zsig(0, i) = sqrt(px2 + py2);
         Zsig(1, i) = atan2(py, px);
-        Zsig(2, i) = (px * cos(yaw) * pv + py * sin(yaw) * pv) / sqrt(px2 + py2);
+        Zsig(2, i) = (px * cos(yaw) * pv + py * sin(yaw) * pv);
+
+        double sqrtPxPy = sqrt(px2 + py2);
+        if (fabs(sqrtPxPy) > 0.001) {
+            Zsig(2, i) /= sqrtPxPy;
+        } else {
+            cout << "Avoided Divide by zero!!!" << endl;
+        }
     }
 
     //calculate mean predicted measurement
