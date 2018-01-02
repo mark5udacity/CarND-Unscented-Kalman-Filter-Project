@@ -344,7 +344,7 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
         double px2 = px * px;
         double py2 = py * py;
         Zsig(0, i) = sqrt(px2 + py2);
-        Zsig(1, i) = atan2(py, px);
+        Zsig(1, i) = px != 0 || py != 0 ? atan2(py, px) : 0;
         Zsig(2, i) = (px * cos(yaw) * pv + py * sin(yaw) * pv);
 
         double sqrtPxPy = sqrt(px2 + py2);
