@@ -1,8 +1,6 @@
 #ifndef UKF_H
 #define UKF_H
 
-static const int NUM_STATE_DIM = 5;
-static const double LAMBDA = 3 - NUM_STATE_DIM;
 static const int NUM_RADAR_DIM = 3;
 
 #include "measurement_package.h"
@@ -83,6 +81,8 @@ public:
 
     ///* Augmented state dimension
     int n_aug_;
+
+    int n_sig_;
 
     ///* Sigma point spreading parameter
     double lambda_;
