@@ -8,6 +8,7 @@ static const int NUM_RADAR_DIM = 3;
 #include <vector>
 #include <string>
 #include <fstream>
+#include "tools.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -26,6 +27,7 @@ private:
     MatrixXd Ht;
     VectorXd weights;
     MatrixXd R_radar_;
+    Tools tools;
 
 public:
 

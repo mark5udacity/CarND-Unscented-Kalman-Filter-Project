@@ -276,20 +276,10 @@ void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
     for (int i = 0; i < weights.rows(); i++) {
         // state difference
         VectorXd x_diff = Xsig_pred.col(i) - x_;
-        //cout << "calc'd diff, now for x_diff(3)" << x_diff(3) << " is > M_PI? " << M_PI << endl;
 
-        //angle normalization
-        // for some reason: really, really large num_e^15 large num is here, this causes almost infinite loop.
-        //x_diff(3) = fmod(x_diff(3), 5.); // Need to reconsider initialization.
-        //cout << "moded by 10, now for x_diff(3)" << x_diff(3) << " is > M_PI? " << M_PI << endl;
-        while (x_diff(3) > M_PI) x_diff(3) -= 2. * M_PI;
-        //cout << "normalized down" << endl;
-
-        while (x_diff(3) < -M_PI) x_diff(3) += 2. * M_PI;
-        //cout << "normalized up" << endl;
+        x_diff(3) = tools.NormalizeAngle(x_diff(3));
 
         P_ += weights(i) * x_diff * x_diff.transpose();
-        //cout << "P is incremented" << endl;
     }
     //cout << "all done" << endl;
 }
@@ -376,8 +366,7 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
     for (int i = 0; i < weights.rows(); i++) {
         VectorXd z_diff = Zsig.col(i) - z_pred;
 
-        while (z_diff(1) > M_PI) z_diff(1) -= 2. * M_PI;
-        while (z_diff(1) < -M_PI) z_diff(1) += 2. * M_PI;
+        z_diff(1) = tools.NormalizeAngle(z_diff(1));
 
         S += weights(i) * z_diff * z_diff.transpose();
     }
@@ -397,15 +386,11 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
 
         //residual
         VectorXd z_diff = Zsig.col(i) - z_pred;
-        //angle normalization
-        while (z_diff(1) > M_PI) z_diff(1) -= 2. * M_PI;
-        while (z_diff(1) < -M_PI) z_diff(1) += 2. * M_PI;
+        z_diff(1) = tools.NormalizeAngle(z_diff(1));
 
         // state difference
         VectorXd x_diff = Xsig_pred.col(i) - x_;
-        //angle normalization
-        while (x_diff(3) > M_PI) x_diff(3) -= 2. * M_PI;
-        while (x_diff(3) < -M_PI) x_diff(3) += 2. * M_PI;
+        x_diff(3) = tools.NormalizeAngle(x_diff(3));
 
         Tc = Tc + weights(i) * x_diff * z_diff.transpose();
     }
@@ -417,8 +402,7 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
     VectorXd z_diff = raw_measurement - z_pred;
 
     //angle normalization
-    while (z_diff(1) > M_PI) z_diff(1) -= 2. * M_PI;
-    while (z_diff(1) < -M_PI) z_diff(1) += 2. * M_PI;
+    z_diff(1) = tools.NormalizeAngle(z_diff(1));
 
     //update state mean and covariance matrix
     x_ += K * z_diff;
