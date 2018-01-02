@@ -67,6 +67,11 @@ UKF::UKF() {
     weights = VectorXd(n_sig_);
     weights.fill(1 / (2 * (lambda_ + n_aug_)));
     weights(0) = lambda_ / (lambda_ + n_aug_);
+
+    R_radar_ = MatrixXd(NUM_RADAR_DIM, NUM_RADAR_DIM);
+    R_radar_ << std_radr_ * std_radr_, 0, 0,
+            0, std_radphi_ * std_radphi_, 0,
+            0, 0, std_radrd_ * std_radrd_;
 }
 
 UKF::~UKF() {}
@@ -183,15 +188,15 @@ MatrixXd UKF::generate_sigma_points() {
     MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sig_);
 
     //create augmented mean state
-    x_aug.head(5) = x_;
-    x_aug(5) = 0;
-    x_aug(6) = 0;
+    x_aug.head(n_x_) = x_;
+    x_aug(n_x_) = 0;
+    x_aug(n_x_ + 1) = 0;
 
     //create augmented covariance matrix
     P_aug.fill(0.0);
     P_aug.topLeftCorner(P_.rows(), P_.cols()) << P_;
-    P_aug(5, 5) = std_a_ * std_a_;
-    P_aug(6, 6) = std_yawdd_ * std_yawdd_;
+    P_aug(n_x_, n_x_) = std_a_ * std_a_;
+    P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
 
     //create square root matrix
     MatrixXd A = P_aug.llt().matrixL();
@@ -264,10 +269,7 @@ MatrixXd UKF::predict_sigma_points(MatrixXd Xsig_aug, double delta_t) {
 
 void UKF::predict_mean_and_covariance(MatrixXd Xsig_pred) {
     //predict state mean
-    x_.fill(0.0);
-    for (int i = 0; i < weights.rows(); i++) {
-        x_ += weights(i) * Xsig_pred.col(i);
-    }
+    x_ = Xsig_pred * weights;
 
     //predict state covariance matrix
     P_.fill(0.0);
@@ -307,9 +309,9 @@ void UKF::UpdateLidar(VectorXd rawMeasurement, MatrixXd matrix) {
     // laser
     VectorXd z_pred = H_ * x_;
     VectorXd y = rawMeasurement - z_pred;
-    MatrixXd S = H_ * P_ * Ht + R_;
-    MatrixXd Si = S.inverse();
     MatrixXd PHt = P_ * Ht;
+    MatrixXd S = H_ * PHt + R_;
+    MatrixXd Si = S.inverse();
     MatrixXd K = PHt * Si;
 
     //new estimate
@@ -380,12 +382,7 @@ void UKF::UpdateRadar(VectorXd raw_measurement, MatrixXd Xsig_pred) {
         S += weights(i) * z_diff * z_diff.transpose();
     }
 
-    MatrixXd R = MatrixXd(NUM_RADAR_DIM, NUM_RADAR_DIM);
-    R << std_radr_ * std_radr_, 0, 0,
-            0, std_radphi_ * std_radphi_, 0,
-            0, 0, std_radrd_ * std_radrd_;
-
-    S += R;
+    S += R_radar_;
 
     //std::cout << "z_pred: " << std::endl << z_pred << std::endl;
     //std::cout << "S: " << std::endl << S << std::endl;

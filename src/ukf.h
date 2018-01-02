@@ -25,6 +25,7 @@ private:
     MatrixXd H_;
     MatrixXd Ht;
     VectorXd weights;
+    MatrixXd R_radar_;
 
 public:
 
